@@ -2,12 +2,12 @@
 
 > 探索、收藏、管理你的個人書單 — React + TypeScript 作品集專案
 
-[![CI](https://github.com/YOUR_USERNAME/bookshelf/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/bookshelf/actions/workflows/ci.yml)
+[![CI](https://github.com/rHyThM3294/bookshelf/actions/workflows/ci.yml/badge.svg)](https://github.com/rHyThM3294/bookshelf/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb)](https://react.dev/)
 [![Vitest](https://img.shields.io/badge/Tested%20with-Vitest-6e9f18)](https://vitest.dev/)
 
-🔗 **[Live Demo](https://YOUR_USERNAME.github.io/bookshelf/)**
+🔗 **[Live Demo](https://rHyThM3294.github.io/bookshelf/)**
 
 ---
 
@@ -84,7 +84,7 @@ src/
 
 ```bash
 # 1. Clone
-git clone https://github.com/YOUR_USERNAME/bookshelf.git
+git clone https://github.com/rHyThM3294/bookshelf.git
 cd bookshelf
 
 # 2. 安裝依賴
@@ -149,7 +149,7 @@ PR 只會執行 test + build，不會觸發 deploy。
 
 1. Fork 此 repo
 2. 修改 `vite.config.ts` 的 `base` 為你的 repo 名稱
-3. 修改 `README.md` 中的 `YOUR_USERNAME`
+3. 修改 `README.md` 中的 `rHyThM3294`
 4. 前往 **Settings → Pages → Source → GitHub Actions**
 5. Push 到 main，Actions 自動完成部署
 
