@@ -2,8 +2,11 @@ import type { BooksApiResponse, Book, SortOption } from '../types'
 
 const BASE_URL = 'https://www.googleapis.com/books/v1'
 const MAX_RESULTS = 12
+const API_KEY: string | undefined = typeof import.meta !== 'undefined'
+  ? (import.meta.env?.VITE_GOOGLE_BOOKS_API_KEY as string | undefined)
+  : undefined
 
-export class ApiError extends Error{
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string
@@ -12,14 +15,15 @@ export class ApiError extends Error{
     this.name = 'ApiError'
   }
 }
-async function fetchJson<T>(url: string): Promise<T>{
+
+async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url)
 
-  if (!response.ok){
-    if (response.status === 429){
+  if (!response.ok) {
+    if (response.status === 429) {
       throw new ApiError(429, '請求次數過多，請稍後再試')
     }
-    if (response.status >= 500){
+    if (response.status >= 500) {
       throw new ApiError(response.status, '伺服器暫時無法使用，請稍後再試')
     }
     const errorData = await response.json().catch(() => ({}))
@@ -28,6 +32,7 @@ async function fetchJson<T>(url: string): Promise<T>{
       (errorData as { error?: { message?: string } }).error?.message ?? `請求失敗 (${response.status})`
     )
   }
+
   return response.json() as Promise<T>
 }
 
@@ -51,15 +56,22 @@ export async function searchBooks(params: SearchBooksParams): Promise<BooksApiRe
   url.searchParams.set('startIndex', String(startIndex))
   url.searchParams.set('orderBy', orderBy)
   url.searchParams.set('printType', 'books')
-  url.searchParams.set('key', import.meta.env.VITE_GOOGLE_BOOKS_API_KEY ?? '')
+  if (API_KEY) {
+    url.searchParams.set('key', API_KEY)
+  }
   if (langRestrict) {
     url.searchParams.set('langRestrict', langRestrict)
   }
+
   return fetchJson<BooksApiResponse>(url.toString())
 }
+
 export async function getBookById(id: string): Promise<Book> {
-  const url = `${BASE_URL}/volumes/${encodeURIComponent(id)}?key=${import.meta.env.VITE_GOOGLE_BOOKS_API_KEY ?? ''}`
-  return fetchJson<Book>(url)
+  const url = new URL(`${BASE_URL}/volumes/${encodeURIComponent(id)}`)
+  if (API_KEY) {
+    url.searchParams.set('key', API_KEY)
+  }
+  return fetchJson<Book>(url.toString())
 }
 
 export function getBookCover(book: Book, size: 'small' | 'large' = 'large'): string {
@@ -69,7 +81,6 @@ export function getBookCover(book: Book, size: 'small' | 'large' = 'large'): str
   const url = size === 'large' ? links.thumbnail : links.smallThumbnail
   if (!url) return ''
 
-  // Force HTTPS and higher quality
   return url.replace('http://', 'https://').replace('zoom=1', 'zoom=2')
 }
 
