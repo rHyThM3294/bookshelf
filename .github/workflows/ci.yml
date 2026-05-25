@@ -37,6 +37,9 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
+      - name: Debug booksApi.ts
+        run: cat src/services/booksApi.ts
+
       - name: Run tests
         run: npm run test
 
