@@ -3,7 +3,7 @@ import type { BooksApiResponse, Book, SortOption } from '../types'
 const BASE_URL = 'https://www.googleapis.com/books/v1'
 const MAX_RESULTS = 12
 
-export class ApiError extends Error {
+export class ApiError extends Error{
   constructor(
     public status: number,
     message: string
@@ -12,15 +12,14 @@ export class ApiError extends Error {
     this.name = 'ApiError'
   }
 }
-
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson<T>(url: string): Promise<T>{
   const response = await fetch(url)
 
-  if (!response.ok) {
-    if (response.status === 429) {
+  if (!response.ok){
+    if (response.status === 429){
       throw new ApiError(429, '請求次數過多，請稍後再試')
     }
-    if (response.status >= 500) {
+    if (response.status >= 500){
       throw new ApiError(response.status, '伺服器暫時無法使用，請稍後再試')
     }
     const errorData = await response.json().catch(() => ({}))
@@ -29,7 +28,6 @@ async function fetchJson<T>(url: string): Promise<T> {
       (errorData as { error?: { message?: string } }).error?.message ?? `請求失敗 (${response.status})`
     )
   }
-
   return response.json() as Promise<T>
 }
 
