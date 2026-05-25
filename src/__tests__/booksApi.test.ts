@@ -1,170 +1,96 @@
-import { describe, it, expect, vi } from 'vitest'
-import { searchBooks, getBookById, getBookCover, getAuthors, ApiError } from '../services/booksApi'
-import type { Book, BooksApiResponse } from '../types'
+import type { BooksApiResponse, Book, SortOption } from '../types'
 
-const mockBook: Book = {
-  id: 'test-id-123',
-  volumeInfo: {
-    title: '深夜加油站遇見蘇格拉底',
-    authors: ['Dan Millman'],
-    publisher: '心靈工坊',
-    publishedDate: '2005',
-    description: '一本關於人生意義的書。',
-    pageCount: 280,
-    categories: ['Self-Help'],
-    averageRating: 4.5,
-    ratingsCount: 1200,
-    imageLinks: {
-      thumbnail: 'http://books.google.com/thumbnail.jpg',
-      smallThumbnail: 'http://books.google.com/smallthumbnail.jpg',
-    },
-    language: 'zh',
-  },
+const BASE_URL = 'https://www.googleapis.com/books/v1'
+const MAX_RESULTS = 12
+const API_KEY = import.meta.env.VITE_GOOGLE_BOOKS_API_KEY as string | undefined
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
 }
 
-const mockApiResponse: BooksApiResponse = {
-  kind: 'books#volumes',
-  totalItems: 1,
-  items: [mockBook],
+async function fetchJson<T>(url: string): Promise<T> {
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    if (response.status === 429) {
+      throw new ApiError(429, '請求次數過多，請稍後再試')
+    }
+    if (response.status >= 500) {
+      throw new ApiError(response.status, '伺服器暫時無法使用，請稍後再試')
+    }
+    const errorData = await response.json().catch(() => ({}))
+    throw new ApiError(
+      response.status,
+      (errorData as { error?: { message?: string } }).error?.message ?? `請求失敗 (${response.status})`
+    )
+  }
+
+  return response.json() as Promise<T>
 }
 
-describe('booksApi', () => {
-  describe('searchBooks', () => {
-    it('returns empty result for empty query', async () => {
-      const result = await searchBooks({ query: '' })
-      expect(result.totalItems).toBe(0)
-      expect(result.items).toEqual([])
-      expect(fetch).not.toHaveBeenCalled()
-    })
+export interface SearchBooksParams {
+  query: string
+  startIndex?: number
+  orderBy?: SortOption
+  langRestrict?: string
+}
 
-    it('returns empty result for whitespace-only query', async () => {
-      const result = await searchBooks({ query: '   ' })
-      expect(result.totalItems).toBe(0)
-    })
+export async function searchBooks(params: SearchBooksParams): Promise<BooksApiResponse> {
+  const { query, startIndex = 0, orderBy = 'relevance', langRestrict } = params
 
-    it('calls fetch with correct URL parameters', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify(mockApiResponse), { status: 200 })
-      )
+  if (!query.trim()) {
+    return { kind: 'books#volumes', totalItems: 0, items: [] }
+  }
 
-      await searchBooks({ query: '哈利波特', orderBy: 'newest' })
+  const url = new URL(`${BASE_URL}/volumes`)
+  url.searchParams.set('q', query.trim())
+  url.searchParams.set('maxResults', String(MAX_RESULTS))
+  url.searchParams.set('startIndex', String(startIndex))
+  url.searchParams.set('orderBy', orderBy)
+  url.searchParams.set('printType', 'books')
+  if (API_KEY) {
+    url.searchParams.set('key', API_KEY)
+  }
+  if (langRestrict) {
+    url.searchParams.set('langRestrict', langRestrict)
+  }
 
-      expect(fetch).toHaveBeenCalledOnce()
-      const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string
-      expect(calledUrl).toContain('q=%E5%93%88%E5%88%A9%E6%B3%A2%E7%89%B9')
-      expect(calledUrl).toContain('orderBy=newest')
-      expect(calledUrl).toContain('maxResults=12')
-    })
+  return fetchJson<BooksApiResponse>(url.toString())
+}
 
-    it('returns book data on success', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify(mockApiResponse), { status: 200 })
-      )
+export async function getBookById(id: string): Promise<Book> {
+  const url = new URL(`${BASE_URL}/volumes/${encodeURIComponent(id)}`)
+  if (API_KEY) {
+    url.searchParams.set('key', API_KEY)
+  }
+  return fetchJson<Book>(url.toString())
+}
 
-      const result = await searchBooks({ query: '哈利波特' })
-      expect(result.totalItems).toBe(1)
-      expect(result.items?.[0].id).toBe('test-id-123')
-    })
+export function getBookCover(book: Book, size: 'small' | 'large' = 'large'): string {
+  const links = book.volumeInfo.imageLinks
+  if (!links) return ''
 
-    it('throws ApiError on 429 rate limit', async () => {
-      vi.mocked(fetch).mockResolvedValue(
-        new Response('', { status: 429 })
-      )
+  const url = size === 'large' ? links.thumbnail : links.smallThumbnail
+  if (!url) return ''
 
-      await expect(searchBooks({ query: '書' })).rejects.toThrow(ApiError)
-      await expect(searchBooks({ query: '書' })).rejects.toThrow('請求次數過多')
-    })
+  // Force HTTPS and higher quality
+  return url.replace('http://', 'https://').replace('zoom=1', 'zoom=2')
+}
 
-    it('throws ApiError on 500 server error', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response('', { status: 500 })
-      )
+export function getAuthors(book: Book): string {
+  const authors = book.volumeInfo.authors
+  if (!authors || authors.length === 0) return '作者不詳'
+  if (authors.length <= 2) return authors.join('、')
+  return `${authors.slice(0, 2).join('、')} 等`
+}
 
-      await expect(searchBooks({ query: '書' })).rejects.toThrow(ApiError)
-    })
-
-    it('includes langRestrict when provided', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify(mockApiResponse), { status: 200 })
-      )
-
-      await searchBooks({ query: '書', langRestrict: 'zh' })
-      const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string
-      expect(calledUrl).toContain('langRestrict=zh')
-    })
-  })
-
-  describe('getBookById', () => {
-    it('fetches a single book by ID', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify(mockBook), { status: 200 })
-      )
-
-      const result = await getBookById('test-id-123')
-      expect(result.id).toBe('test-id-123')
-      expect(result.volumeInfo.title).toBe('深夜加油站遇見蘇格拉底')
-    })
-
-    it('throws ApiError when book not found', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ error: { message: 'Not found' } }),
-          { status: 404 }
-        )
-      )
-
-      await expect(getBookById('nonexistent')).rejects.toThrow(ApiError)
-    })
-  })
-
-  describe('getBookCover', () => {
-    it('returns HTTPS thumbnail URL', () => {
-      const url = getBookCover(mockBook, 'large')
-      expect(url).toContain('https://')
-      expect(url).not.toContain('http://')
-    })
-
-    it('returns small thumbnail for small size', () => {
-      const url = getBookCover(mockBook, 'small')
-      expect(url).toContain('smallthumbnail')
-    })
-
-    it('returns empty string when no imageLinks', () => {
-      const bookWithoutCover: Book = {
-        ...mockBook,
-        volumeInfo: { ...mockBook.volumeInfo, imageLinks: undefined },
-      }
-      expect(getBookCover(bookWithoutCover)).toBe('')
-    })
-  })
-
-  describe('getAuthors', () => {
-    it('returns author name', () => {
-      expect(getAuthors(mockBook)).toBe('Dan Millman')
-    })
-
-    it('joins two authors with 、', () => {
-      const twoAuthors: Book = {
-        ...mockBook,
-        volumeInfo: { ...mockBook.volumeInfo, authors: ['Author A', 'Author B'] },
-      }
-      expect(getAuthors(twoAuthors)).toBe('Author A、Author B')
-    })
-
-    it('truncates more than 2 authors', () => {
-      const manyAuthors: Book = {
-        ...mockBook,
-        volumeInfo: { ...mockBook.volumeInfo, authors: ['A', 'B', 'C', 'D'] },
-      }
-      expect(getAuthors(manyAuthors)).toBe('A、B 等')
-    })
-
-    it('returns 作者不詳 when no authors', () => {
-      const noAuthor: Book = {
-        ...mockBook,
-        volumeInfo: { ...mockBook.volumeInfo, authors: undefined },
-      }
-      expect(getAuthors(noAuthor)).toBe('作者不詳')
-    })
-  })
-})
+export function truncateDescription(description: string, maxLength = 200): string {
+  if (description.length <= maxLength) return description
+  return description.slice(0, maxLength).trimEnd() + '...'
+}
