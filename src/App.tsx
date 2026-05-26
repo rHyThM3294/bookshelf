@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useBookSearch } from './hooks/useBookSearch'
 import { useShelf } from './hooks/useShelf'
 import { SearchBar } from './components/SearchBar'
 import { BookGrid } from './components/BookGrid'
 import { BookModal } from './components/BookModal'
 import { ShelfPanel } from './components/ShelfPanel'
-import { EmptyState } from './components/EmptyState'
+import { EmptyState, recordSearch } from './components/EmptyState'
 import { StatsBar } from './components/StatsBar'
 import type { Book } from './types'
 import './index.css'
@@ -15,18 +15,37 @@ export default function App() {
   const shelf = useShelf()
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [view, setView] = useState<'search' | 'shelf'>('search')
+  const [injectedQuery, setInjectedQuery] = useState<string | undefined>(undefined)
 
   const hasResults = search.books.length > 0
   const hasSearched = search.query.length > 0
+
+  // 點擊建議詞 / 歷史詞：填入 input 並觸發搜尋
+  const handleSuggestionClick = useCallback((query: string) => {
+    recordSearch(query)
+    // 透過唯一物件觸發 useEffect（即使同一詞也能重新搜尋）
+    setInjectedQuery(query + '\u200b' + Date.now())
+  }, [])
+
+  // 使用者自己手動搜尋時也記錄歷史
+  const handleSearch = useCallback((q: string, sort?: Parameters<typeof search.search>[1]) => {
+    recordSearch(q)
+    search.search(q, sort)
+  }, [search])
 
   return (
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <div className="logo">
+          {/* Logo 點擊回首頁（切換到搜尋頁並重置） */}
+          <button
+            className="logo logo-btn"
+            onClick={() => { setView('search'); search.reset() }}
+            aria-label="回到首頁"
+          >
             <span className="logo-icon">◈</span>
             <span className="logo-text">BookShelf</span>
-          </div>
+          </button>
 
           <nav className="nav">
             <button
@@ -56,9 +75,10 @@ export default function App() {
                 探索你的<br />下一本書
               </h1>
               <SearchBar
-                onSearch={search.search}
+                onSearch={handleSearch}
                 loading={search.loading}
                 query={search.query}
+                injectedQuery={injectedQuery}
               />
               {hasResults && (
                 <StatsBar
@@ -78,7 +98,7 @@ export default function App() {
             )}
 
             {!hasSearched && !search.loading && (
-              <EmptyState />
+              <EmptyState onSuggestionClick={handleSuggestionClick} />
             )}
 
             {hasSearched && !search.loading && !search.error && search.books.length === 0 && (
