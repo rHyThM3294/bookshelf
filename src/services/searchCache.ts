@@ -86,7 +86,7 @@ export function cacheGet(key: string): BooksApiResponse | null {
   return memGet(key) ?? lsGet(key)
 }
 
-export function cacheSet(key: string, data: BooksApiResponse): void {
+export function cacheSet(key: string, data: BooksApiResponse): void{
   memSet(key, data)
   lsSet(key, data)
 }
