@@ -55,7 +55,7 @@ function buildCacheKey(params: Required<Omit<SearchBooksParams, 'langRestrict'>>
   return `${params.query}|${params.startIndex}|${params.orderBy}|${params.langRestrict ?? ''}`
 }
 
-export async function searchBooks(params: SearchBooksParams): Promise<BooksApiResponse> {
+export async function searchBooks(params: SearchBooksParams): Promise<BooksApiResponse>{
   const { query, startIndex = 0, orderBy = 'relevance', langRestrict } = params
 
   if (!query.trim()) {
