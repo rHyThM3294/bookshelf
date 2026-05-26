@@ -15,7 +15,7 @@ export default function App() {
   const shelf = useShelf()
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [view, setView] = useState<'search' | 'shelf'>('search')
-  const [injectedQuery, setInjectedQuery] = useState<string | undefined>(undefined)
+  const [injectedQuery, setInjectedQuery] = useState<{ text: string; id: number } | undefined>(undefined)
 
   const hasResults = search.books.length > 0
   const hasSearched = search.query.length > 0
@@ -24,7 +24,7 @@ export default function App() {
   const handleSuggestionClick = useCallback((query: string) => {
     recordSearch(query)
     // 透過唯一物件觸發 useEffect（即使同一詞也能重新搜尋）
-    setInjectedQuery(query + '\u200b' + Date.now())
+    setInjectedQuery({ text: query, id: Date.now() })
   }, [])
 
   // 使用者自己手動搜尋時也記錄歷史

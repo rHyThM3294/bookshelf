@@ -6,7 +6,7 @@ interface SearchBarProps {
   loading: boolean
   query: string
   /** 外部注入的搜尋詞（點擊建議詞時使用） */
-  injectedQuery?: string
+  injectedQuery?: { text: string; id: number }
 }
 
 export function SearchBar({ onSearch, loading, query, injectedQuery }: SearchBarProps) {
@@ -14,9 +14,9 @@ export function SearchBar({ onSearch, loading, query, injectedQuery }: SearchBar
 
   // 當外部注入新詞語時，自動填入並觸發搜尋
   useEffect(() => {
-    if (injectedQuery !== undefined && injectedQuery !== '') {
-      setInput(injectedQuery)
-      onSearch(injectedQuery)
+    if (injectedQuery) {
+      setInput(injectedQuery.text)
+      onSearch(injectedQuery.text)
     }
   }, [injectedQuery]) // eslint-disable-line react-hooks/exhaustive-deps
 
