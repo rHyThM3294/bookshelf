@@ -4,6 +4,33 @@ import type { Book, SortOption } from '../types'
 
 const PAGE_SIZE = 12
 
+/**
+ * 429 / 403 退避重試
+ * 最多重試 2 次，每次等待 retryAfter 秒（預設 2s）
+ */
+async function searchWithRetry(
+  params: Parameters<typeof searchBooks>[0],
+  maxRetries = 2
+): Promise<Awaited<ReturnType<typeof searchBooks>>> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await searchBooks(params)
+    } catch (err) {
+      lastError = err
+      if (err instanceof ApiError && (err.status === 429 || err.status === 403)) {
+        if (attempt < maxRetries) {
+          const waitMs = (attempt + 1) * 2000  // 2s, 4s
+          await new Promise(r => setTimeout(r, waitMs))
+          continue
+        }
+      }
+      throw err
+    }
+  }
+  throw lastError
+}
+
 interface UseBookSearchReturn {
   books: Book[]
   totalItems: number
@@ -28,7 +55,6 @@ export function useBookSearch(): UseBookSearchReturn {
   const [page, setPage] = useState(0)
   const [sortBy, setSortByState] = useState<SortOption>('relevance')
 
-  // Abort controller to cancel in-flight requests on new search
   const abortRef = useRef<AbortController | null>(null)
 
   const reset = useCallback(() => {
@@ -45,7 +71,6 @@ export function useBookSearch(): UseBookSearchReturn {
       return
     }
 
-    // Cancel previous request
     abortRef.current?.abort()
     abortRef.current = new AbortController()
 
@@ -56,7 +81,7 @@ export function useBookSearch(): UseBookSearchReturn {
     setBooks([])
 
     try {
-      const result = await searchBooks({
+      const result = await searchWithRetry({
         query: newQuery,
         startIndex: 0,
         orderBy: sort,
@@ -89,7 +114,7 @@ export function useBookSearch(): UseBookSearchReturn {
     setError(null)
 
     try {
-      const result = await searchBooks({
+      const result = await searchWithRetry({
         query,
         startIndex,
         orderBy: sortBy,
