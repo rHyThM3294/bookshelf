@@ -3,7 +3,7 @@ import type { Book, ShelfBook, ReadingStatus } from '../types'
 
 const STORAGE_KEY = 'bookshelf-items'
 
-function loadFromStorage(): ShelfBook[] {
+function loadFromStorage(): ShelfBook[]{
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
@@ -12,7 +12,6 @@ function loadFromStorage(): ShelfBook[] {
     return []
   }
 }
-
 function saveToStorage(items: ShelfBook[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
@@ -20,8 +19,7 @@ function saveToStorage(items: ShelfBook[]): void {
     // Storage might be full; fail silently
   }
 }
-
-interface UseShelfReturn {
+interface UseShelfReturn{
   items: ShelfBook[]
   addBook: (book: Book, status: ReadingStatus) => void
   removeBook: (bookId: string) => void
@@ -30,14 +28,12 @@ interface UseShelfReturn {
   isInShelf: (bookId: string) => boolean
   countByStatus: (status: ReadingStatus) => number
 }
-
-export function useShelf(): UseShelfReturn {
+export function useShelf(): UseShelfReturn{
   const [items, setItems] = useState<ShelfBook[]>(loadFromStorage)
 
   useEffect(() => {
     saveToStorage(items)
   }, [items])
-
   const addBook = useCallback((book: Book, status: ReadingStatus) => {
     setItems(prev => {
       const exists = prev.find(item => item.bookId === book.id)
