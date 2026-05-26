@@ -46,7 +46,7 @@ interface UseBookSearchReturn {
   setSortBy: (sort: SortOption) => void
 }
 
-export function useBookSearch(): UseBookSearchReturn {
+export function useBookSearch(): UseBookSearchReturn{
   const [books, setBooks] = useState<Book[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -54,9 +54,7 @@ export function useBookSearch(): UseBookSearchReturn {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
   const [sortBy, setSortByState] = useState<SortOption>('relevance')
-
   const abortRef = useRef<AbortController | null>(null)
-
   const reset = useCallback(() => {
     setBooks([])
     setTotalItems(0)
@@ -64,32 +62,27 @@ export function useBookSearch(): UseBookSearchReturn {
     setPage(0)
     setQuery('')
   }, [])
-
   const search = useCallback(async (newQuery: string, sort: SortOption = sortBy) => {
     if (!newQuery.trim()) {
       reset()
       return
     }
-
     abortRef.current?.abort()
     abortRef.current = new AbortController()
-
     setLoading(true)
     setError(null)
     setQuery(newQuery)
     setPage(0)
     setBooks([])
-
-    try {
+    try{
       const result = await searchWithRetry({
         query: newQuery,
         startIndex: 0,
         orderBy: sort,
       })
-
       setBooks(result.items ?? [])
       setTotalItems(result.totalItems)
-    } catch (err) {
+    }catch (err){
       if (err instanceof Error && err.name === 'AbortError') return
 
       if (err instanceof ApiError) {
