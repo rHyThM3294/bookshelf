@@ -91,6 +91,10 @@ export async function searchBooks(params: SearchBooksParams): Promise<BooksApiRe
     return data
   })
 
+  // 讓 rejection 由呼叫端（await promise）處理；
+  // 加空 catch 讓 Node/瀏覽器不把它當成 unhandled rejection
+  promise.catch(() => { /* handled by caller */ })
+
   setInFlight(cacheKey, promise)
   return promise
 }

@@ -100,5 +100,9 @@ export function getInFlight(key: string): Promise<BooksApiResponse> | null {
 
 export function setInFlight(key: string, promise: Promise<BooksApiResponse>): void {
   inFlight.set(key, promise)
-  promise.finally(() => inFlight.delete(key))
+  // 用 then/catch 各自清除，避免 .finally() 產生無人接收的衍生 Promise rejection
+  promise.then(
+    () => inFlight.delete(key),
+    () => inFlight.delete(key),
+  )
 }
