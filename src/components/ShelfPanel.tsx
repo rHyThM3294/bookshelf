@@ -32,7 +32,7 @@ export function ShelfPanel({ items, onBookClick, onRemove, onStatusChange, count
     return (
       <div className="shelf-empty">
         <div className="shelf-empty-icon">◈</div>
-        <h2>書架還是空的</h2>
+        <h1>書架還是空的</h1>
         <p>搜尋並加入你想讀的書吧</p>
       </div>
     )
@@ -79,7 +79,12 @@ export function ShelfPanel({ items, onBookClick, onRemove, onStatusChange, count
                 onClick={() => onBookClick(item.book)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={e => e.key === 'Enter' && onBookClick(item.book)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onBookClick(item.book)
+                  }
+                }}
                 aria-label={`查看《${title}》詳情`}
               >
                 {cover ? (
@@ -92,15 +97,20 @@ export function ShelfPanel({ items, onBookClick, onRemove, onStatusChange, count
               </div>
 
               <div className="shelf-item-info">
-                <h3
+                <h2
                   className="shelf-item-title"
                   onClick={() => onBookClick(item.book)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={e => e.key === 'Enter' && onBookClick(item.book)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      onBookClick(item.book)
+                    }
+                  }}
                 >
                   {title}
-                </h3>
+                </h2>
                 <p className="shelf-item-author">{authors}</p>
                 {publishedDate && (
                   <p className="shelf-item-year">{publishedDate.slice(0, 4)}</p>

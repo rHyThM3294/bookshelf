@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { getSearchHistory } from '../services/searchHistory'
 
 // 預設熱門搜尋詞（涵蓋中英文、各類型）
 const DEFAULT_SUGGESTIONS = [
@@ -7,27 +8,6 @@ const DEFAULT_SUGGESTIONS = [
   '解憂雜貨店', '百年孤寂', 'Atomic Habits', 'The Alchemist',
   '人類大歷史', '被討厭的勇氣', '蛤蟆先生去看心理師',
 ]
-
-const HISTORY_KEY = 'bookshelf_search_history'
-const MAX_HISTORY = 10
-
-export function getSearchHistory(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
-
-export function recordSearch(query: string) {
-  try {
-    const history = getSearchHistory().filter(h => h !== query)
-    const updated = [query, ...history].slice(0, MAX_HISTORY)
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
-  } catch {
-    // ignore
-  }
-}
 
 interface EmptyStateProps {
   onSuggestionClick: (query: string) => void

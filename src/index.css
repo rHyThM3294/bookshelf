@@ -6,7 +6,7 @@
 :root {
   --ink: #1a1612;
   --ink-2: #4a4540;
-  --ink-3: #8a8480;
+  --ink-3: #686460;
   --paper: #faf8f5;
   --paper-2: #f2ede8;
   --paper-3: #e8e2db;
@@ -86,7 +86,7 @@ body {
 .nav-btn.active { background: var(--ink); color: var(--paper); }
 
 .badge {
-  background: var(--accent); color: white;
+  background: var(--accent-dark); color: white;
   font-size: 0.7rem; font-weight: 500;
   padding: 1px 6px; border-radius: 99px;
   min-width: 18px; text-align: center;
@@ -156,7 +156,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   min-width: 72px;
 }
-.search-btn:hover:not(:disabled) { background: var(--accent); }
+.search-btn:hover:not(:disabled) { background: var(--accent-dark); }
 .search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .spinner {
@@ -204,6 +204,23 @@ body {
 }
 .no-results .hint { font-size: 0.875rem; color: var(--ink-3); margin-top: 0.5rem; }
 
+/* ── Error Boundary ── */
+.error-boundary {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 2rem; gap: 0.5rem;
+}
+.error-boundary-icon { font-size: 2.5rem; color: var(--accent); margin-bottom: 0.5rem; }
+.error-boundary h1 { font-family: var(--font-display); font-size: 1.5rem; color: var(--ink); }
+.error-boundary p { color: var(--ink-3); margin-bottom: 1rem; }
+.error-boundary button {
+  padding: 10px 24px; border: none; border-radius: 40px;
+  background: var(--ink); color: var(--paper);
+  font-family: var(--font-body); font-size: 0.9rem; font-weight: 500;
+  cursor: pointer; transition: background 0.15s;
+}
+.error-boundary button:hover { background: var(--accent-dark); }
+
 /* ── Empty State ── */
 .empty-state {
   text-align: center; padding: 5rem 2rem 3rem;
@@ -222,8 +239,8 @@ body {
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .suggestion-chip:hover {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
   color: white;
 }
 .suggestion-chip--history {
@@ -233,8 +250,8 @@ body {
   display: flex; align-items: center; gap: 5px;
 }
 .suggestion-chip--history:hover {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
   color: white;
 }
 .chip-icon { font-size: 0.8em; opacity: 0.7; }
@@ -517,11 +534,16 @@ body {
   font-size: 3rem; color: var(--paper-3);
   display: block; margin-bottom: 1rem;
 }
-.shelf-empty h2 {
+.shelf-empty h1 {
   font-family: var(--font-display); font-size: 1.5rem;
   color: var(--ink); margin-bottom: 0.5rem;
 }
 .shelf-empty p { color: var(--ink-3); font-size: 0.9rem; }
+
+.panel-loading {
+  text-align: center; padding: 5rem 2rem;
+  color: var(--ink-3); font-size: 0.9rem;
+}
 
 /* ── Loading Grid ── */
 .loading-grid {

@@ -1,31 +1,91 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, lazy, Suspense } from 'react'
 import { useBookSearch } from './hooks/useBookSearch'
 import { useShelf } from './hooks/useShelf'
 import { SearchBar } from './components/SearchBar'
 import { BookGrid } from './components/BookGrid'
-import { BookModal } from './components/BookModal'
-import { ShelfPanel } from './components/ShelfPanel'
-import { EmptyState, recordSearch } from './components/EmptyState'
+import { EmptyState } from './components/EmptyState'
+import { recordSearch } from './services/searchHistory'
+import { getBookById } from './services/booksApi'
 import { StatsBar } from './components/StatsBar'
-import type { Book } from './types'
+import type { Book, SortOption } from './types'
 import './index.css'
 
+// Modal 與書架頁不在首次進站的關鍵路徑上，拆成獨立 chunk 縮小初始 bundle
+const BookModal = lazy(() => import('./components/BookModal').then(m => ({ default: m.BookModal })))
+const ShelfPanel = lazy(() => import('./components/ShelfPanel').then(m => ({ default: m.ShelfPanel })))
+
+type View = 'search' | 'shelf'
+
+/** 從網址讀出搜尋詞／排序／頁籤／書籍詳情，讓畫面可分享、重新整理不遺失 */
+function parseUrlState(): { q: string; sort: SortOption; view: View; bookId: string | null } {
+  const params = new URLSearchParams(window.location.search)
+  const sortParam = params.get('sort')
+  return {
+    q: params.get('q') ?? '',
+    sort: sortParam === 'newest' ? 'newest' : 'relevance',
+    view: params.get('view') === 'shelf' ? 'shelf' : 'search',
+    bookId: params.get('book'),
+  }
+}
+
 export default function App() {
-  const search = useBookSearch()
+  const initial = parseUrlState()
+  const search = useBookSearch(initial.q, initial.sort)
   const shelf = useShelf()
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
-  const [view, setView] = useState<'search' | 'shelf'>('search')
-  const [injectedQuery, setInjectedQuery] = useState<{ text: string; id: number } | undefined>(undefined)
+  const [view, setView] = useState<View>(initial.view)
+
+  // 網址帶有書籍 ID 時（分享的書籍詳情連結），掛載時直接抓該本書並開啟 Modal
+  useEffect(() => {
+    if (initial.bookId) {
+      getBookById(initial.bookId).then(setSelectedBook).catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 將目前搜尋詞／排序／頁籤／書籍詳情同步到網址，讓畫面可分享、重新整理不遺失
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (view === 'shelf') params.set('view', 'shelf')
+    if (search.query) params.set('q', search.query)
+    if (search.sortBy !== 'relevance') params.set('sort', search.sortBy)
+    if (selectedBook) params.set('book', selectedBook.id)
+    const queryString = params.toString()
+    const newUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ''}`
+    if (newUrl !== window.location.pathname + window.location.search) {
+      window.history.pushState(null, '', newUrl)
+    }
+  }, [view, search.query, search.sortBy, selectedBook])
+
+  // 支援瀏覽器上一頁／下一頁：還原網址對應的搜尋、頁籤與書籍詳情
+  useEffect(() => {
+    const handlePopState = () => {
+      const state = parseUrlState()
+      setView(state.view)
+      if (state.q) {
+        search.search(state.q, state.sort)
+      } else {
+        search.reset()
+      }
+      if (state.bookId) {
+        getBookById(state.bookId).then(setSelectedBook).catch(() => setSelectedBook(null))
+      } else {
+        setSelectedBook(null)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const hasResults = search.books.length > 0
   const hasSearched = search.query.length > 0
 
-  // 點擊建議詞 / 歷史詞：填入 input 並觸發搜尋
+  // 點擊建議詞 / 歷史詞：直接觸發搜尋，SearchBar 會自動同步顯示文字
   const handleSuggestionClick = useCallback((query: string) => {
     recordSearch(query)
-    // 透過唯一物件觸發 useEffect（即使同一詞也能重新搜尋）
-    setInjectedQuery({ text: query, id: Date.now() })
-  }, [])
+    search.search(query)
+  }, [search])
 
   // 使用者自己手動搜尋時也記錄歷史
   const handleSearch = useCallback((q: string, sort?: Parameters<typeof search.search>[1]) => {
@@ -78,7 +138,6 @@ export default function App() {
                 onSearch={handleSearch}
                 loading={search.loading}
                 query={search.query}
-                injectedQuery={injectedQuery}
               />
               {hasResults && (
                 <StatsBar
@@ -128,24 +187,28 @@ export default function App() {
             )}
           </>
         ) : (
-          <ShelfPanel
-            items={shelf.items}
-            onBookClick={setSelectedBook}
-            onRemove={shelf.removeBook}
-            onStatusChange={shelf.updateStatus}
-            countByStatus={shelf.countByStatus}
-          />
+          <Suspense fallback={<div className="panel-loading">載入中...</div>}>
+            <ShelfPanel
+              items={shelf.items}
+              onBookClick={setSelectedBook}
+              onRemove={shelf.removeBook}
+              onStatusChange={shelf.updateStatus}
+              countByStatus={shelf.countByStatus}
+            />
+          </Suspense>
         )}
       </main>
 
       {selectedBook && (
-        <BookModal
-          book={selectedBook}
-          onClose={() => setSelectedBook(null)}
-          status={shelf.getStatus(selectedBook.id)}
-          onAddToShelf={(status) => shelf.addBook(selectedBook, status)}
-          onRemove={() => shelf.removeBook(selectedBook.id)}
-        />
+        <Suspense fallback={null}>
+          <BookModal
+            book={selectedBook}
+            onClose={() => setSelectedBook(null)}
+            status={shelf.getStatus(selectedBook.id)}
+            onAddToShelf={(status) => shelf.addBook(selectedBook, status)}
+            onRemove={() => shelf.removeBook(selectedBook.id)}
+          />
+        </Suspense>
       )}
     </div>
   )

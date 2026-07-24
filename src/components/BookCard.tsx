@@ -26,12 +26,17 @@ export function BookCard({ book, onClick, status }: BookCardProps) {
   const year = publishedDate?.slice(0, 4)
 
   return (
-    <article
+    <div
       className="book-card"
       onClick={() => onClick(book)}
       role="button"
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && onClick(book)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick(book)
+        }
+      }}
       aria-label={`${title}，作者：${authors}`}
     >
       <div className="card-cover">
@@ -55,7 +60,7 @@ export function BookCard({ book, onClick, status }: BookCardProps) {
       </div>
 
       <div className="card-info">
-        <h3 className="card-title">{title}</h3>
+        <h2 className="card-title">{title}</h2>
         <p className="card-author">{authors}</p>
         <div className="card-meta">
           {averageRating && (
@@ -66,6 +71,6 @@ export function BookCard({ book, onClick, status }: BookCardProps) {
           {year && <span className="year">{year}</span>}
         </div>
       </div>
-    </article>
+    </div>
   )
 }

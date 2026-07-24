@@ -37,8 +37,8 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
-      - name: Debug booksApi.ts
-        run: cat src/services/booksApi.ts
+      - name: Lint
+        run: npm run lint
 
       - name: Run tests
         run: npm run test
@@ -51,7 +51,40 @@ jobs:
           path: coverage/
           retention-days: 7
 
-  # ── Job 2: Build ──────────────────────────────────────────────
+  # ── Job 2: E2E (Playwright) ───────────────────────────────────
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ── Job 3: Build ──────────────────────────────────────────────
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -80,11 +113,11 @@ jobs:
         with:
           path: dist/
 
-  # ── Job 3: Deploy (main branch only) ─────────────────────────
+  # ── Job 4: Deploy (main branch only) ─────────────────────────
   deploy:
     name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, e2e]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     environment:

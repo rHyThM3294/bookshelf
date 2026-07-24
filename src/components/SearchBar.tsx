@@ -1,24 +1,22 @@
-import { useState, useEffect, type FormEvent, type KeyboardEvent } from 'react'
+import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import type { SortOption } from '../types'
 
 interface SearchBarProps {
   onSearch: (query: string, sort?: SortOption) => void
   loading: boolean
+  /** 目前生效中的搜尋詞（可能因建議詞點擊、瀏覽器上一頁等外部原因而改變） */
   query: string
-  /** 外部注入的搜尋詞（點擊建議詞時使用） */
-  injectedQuery?: { text: string; id: number }
 }
 
-export function SearchBar({ onSearch, loading, query, injectedQuery }: SearchBarProps) {
+export function SearchBar({ onSearch, loading, query }: SearchBarProps) {
   const [input, setInput] = useState(query)
+  const [syncedQuery, setSyncedQuery] = useState(query)
 
-  // 當外部注入新詞語時，自動填入並觸發搜尋
-  useEffect(() => {
-    if (injectedQuery) {
-      setInput(injectedQuery.text)
-      onSearch(injectedQuery.text)
-    }
-  }, [injectedQuery]) // eslint-disable-line react-hooks/exhaustive-deps
+  // query 因外部原因改變時（非使用者在這個輸入框打字），於渲染階段同步文字
+  if (query !== syncedQuery) {
+    setSyncedQuery(query)
+    setInput(query)
+  }
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
