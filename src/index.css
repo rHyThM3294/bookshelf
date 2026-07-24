@@ -613,6 +613,28 @@ body {
   .scroll-to-top { transition: none; }
 }
 
+/* ── PWA Update Toast ── */
+.pwa-toast {
+  position: fixed; left: 20px; bottom: 20px; z-index: 95;
+  max-width: 280px; padding: 14px 16px;
+  background: var(--paper); color: var(--ink);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; gap: 10px;
+  font-size: 0.875rem;
+}
+.pwa-toast-actions { display: flex; gap: 8px; }
+.pwa-toast-actions button {
+  padding: 6px 14px; border-radius: 99px;
+  border: 1px solid var(--border-strong);
+  background: var(--ink); color: var(--paper);
+  font-family: var(--font-body); font-size: 0.8rem;
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.pwa-toast-actions button:hover { background: var(--accent-dark); color: white; }
+.pwa-toast-actions button.secondary { background: transparent; color: var(--ink-2); }
+.pwa-toast-actions button.secondary:hover { background: var(--paper-2); color: var(--ink); }
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

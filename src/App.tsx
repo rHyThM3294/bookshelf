@@ -6,6 +6,7 @@ import { SearchBar } from './components/SearchBar'
 import { BookGrid } from './components/BookGrid'
 import { EmptyState } from './components/EmptyState'
 import { ScrollToTopButton } from './components/ScrollToTopButton'
+import { PwaUpdatePrompt } from './components/PwaUpdatePrompt'
 import { recordSearch } from './services/searchHistory'
 import { getBookById } from './services/booksApi'
 import { StatsBar } from './components/StatsBar'
@@ -232,6 +233,7 @@ export default function App() {
       )}
 
       <ScrollToTopButton />
+      <PwaUpdatePrompt />
     </div>
   )
 }
