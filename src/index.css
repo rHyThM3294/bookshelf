@@ -609,6 +609,9 @@ body {
 .scroll-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .scroll-to-top:hover { background: var(--accent-dark); }
 .scroll-to-top:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .scroll-to-top { transition: none; }
+}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; }

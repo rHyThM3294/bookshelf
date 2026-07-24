@@ -13,7 +13,14 @@ export function ScrollToTopButton() {
   }, [])
 
   const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // 尊重「減少動態效果」偏好設定的使用者，直接跳頂而不平滑捲動
+    let prefersReducedMotion = false
+    try {
+      prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    } catch {
+      // matchMedia 不支援時，維持預設的平滑捲動
+    }
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' })
   }, [])
 
   return (
