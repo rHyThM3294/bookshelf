@@ -18,6 +18,10 @@
 | ![搜尋探索](docs/screenshots/search.png) | ![書籍詳情](docs/screenshots/detail.png) | ![我的書架](docs/screenshots/shelf.png) |
 | 搜尋書名、作者，即時顯示結果 | Modal 展示完整書籍資訊 | 分類管理想讀／在讀／已讀 |
 
+🌙 支援深色模式（右上角切換，或跟隨系統設定）：
+
+![深色模式](docs/screenshots/dark.png)
+
 ---
 
 ## 功能
@@ -30,6 +34,7 @@
 - **🔴 Error State** — 完整的 API 錯誤處理（429、500、網路斷線）＋ 頂層 Error Boundary，元件出錯不會整頁白屏
 - **♿ 無障礙** — ARIA labels、鍵盤導航、語意化 HTML，並用 axe-core 自動化掃描把關
 - **📱 RWD** — 支援手機至桌機的響應式佈局
+- **🌙 深色模式** — 跟隨系統偏好或手動切換，選擇會記住；用 CSS 變數切換主題，避免載入瞬間閃色（FOUC）
 - **⚙️ 效能** — Modal／書架頁以 `React.lazy` 拆成獨立 chunk，縮小首屏 bundle
 
 ---
@@ -59,7 +64,8 @@ src/
 │   └── searchHistory.ts # 最近搜尋紀錄（localStorage）
 ├── hooks/          # Custom Hooks
 │   ├── useBookSearch.ts  # 搜尋狀態（useReducer）、分頁、AbortController
-│   └── useShelf.ts       # 書架 CRUD + localStorage 同步
+│   ├── useShelf.ts       # 書架 CRUD + localStorage 同步
+│   └── useTheme.ts       # 深色／淺色主題切換 + localStorage 記憶
 ├── components/     # UI 元件（BookModal、ShelfPanel 以 React.lazy 拆分）
 │   ├── SearchBar.tsx
 │   ├── BookCard.tsx
@@ -78,8 +84,9 @@ src/
 
 e2e/                # Playwright E2E 測試（瀏覽器端對端）
 ├── search-to-shelf.spec.ts
-└── a11y.spec.ts    # axe-core 自動化無障礙掃描（首頁／搜尋結果／詳情/書架）
+└── a11y.spec.ts    # axe-core 自動化無障礙掃描，淺色／深色主題各掃一次
 
+public/             # 靜態資源（favicon、OG 分享圖）
 scripts/            # 開發用腳本（不接 CI）
 └── screenshots.spec.ts  # 產生 README 截圖
 ```
@@ -147,7 +154,7 @@ npm run test:coverage
 - `ErrorBoundary.tsx` — 子元件丟出例外時正確顯示 fallback，而非整頁白屏
 - `App.tsx`（整合測試）— 搜尋 → 開啟詳情 → 加入書架 → 切換頁面的完整使用者流程
 - `e2e/search-to-shelf.spec.ts`（Playwright）— 同一條關鍵路徑在真實瀏覽器中執行，並驗證網址同步、瀏覽器上一頁、書籍詳情深連結（重新整理還原 Modal）
-- `e2e/a11y.spec.ts`（Playwright + axe-core）— 對首頁、搜尋結果、書籍詳情 Modal、書架頁自動掃描無障礙違規
+- `e2e/a11y.spec.ts`（Playwright + axe-core）— 對首頁、搜尋結果、書籍詳情 Modal、書架頁自動掃描無障礙違規，淺色／深色主題各跑一輪（曾抓出深色模式下沒隨主題變色的寫死背景色）
 
 ---
 

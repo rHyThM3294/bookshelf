@@ -6,6 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="BookShelf — 探索並管理你的個人書單，串接 Google Books API" />
     <title>BookShelf</title>
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BookShelf — 探索、收藏、管理你的個人書單" />
+    <meta property="og:description" content="React + TypeScript 作品集專案，串接 Google Books API，支援搜尋、書架管理、深色模式。" />
+    <meta property="og:image" content="https://rHyThM3294.github.io/bookshelf/og-image.png" />
+    <meta property="og:url" content="https://rHyThM3294.github.io/bookshelf/" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BookShelf — 探索、收藏、管理你的個人書單" />
+    <meta name="twitter:description" content="React + TypeScript 作品集專案，串接 Google Books API" />
+    <meta name="twitter:image" content="https://rHyThM3294.github.io/bookshelf/og-image.png" />
+
+    <script>
+      // 在畫面渲染前先套用主題，避免載入瞬間閃一下錯誤的顏色（FOUC）
+      (function () {
+        try {
+          var saved = localStorage.getItem('bookshelf-theme');
+          var theme =
+            saved === 'light' || saved === 'dark'
+              ? saved
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

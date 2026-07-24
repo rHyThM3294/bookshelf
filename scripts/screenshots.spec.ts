@@ -39,3 +39,12 @@ test('我的書架畫面', async ({ page }) => {
   await page.waitForTimeout(300)
   await page.screenshot({ path: `${OUT_DIR}/shelf.png` })
 })
+
+test.describe('深色模式', () => {
+  test.use({ colorScheme: 'dark' })
+
+  test('探索書籍畫面（深色）', async ({ page }) => {
+    await searchAndOpenFirstCard(page)
+    await page.screenshot({ path: `${OUT_DIR}/dark.png` })
+  })
+})

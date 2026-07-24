@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from 'react'
 import { useBookSearch } from './hooks/useBookSearch'
 import { useShelf } from './hooks/useShelf'
+import { useTheme } from './hooks/useTheme'
 import { SearchBar } from './components/SearchBar'
 import { BookGrid } from './components/BookGrid'
 import { EmptyState } from './components/EmptyState'
@@ -32,6 +33,7 @@ export default function App() {
   const initial = parseUrlState()
   const search = useBookSearch(initial.q, initial.sort)
   const shelf = useShelf()
+  const { theme, toggleTheme } = useTheme()
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [view, setView] = useState<View>(initial.view)
 
@@ -107,23 +109,33 @@ export default function App() {
             <span className="logo-text">BookShelf</span>
           </button>
 
-          <nav className="nav">
+          <div className="header-actions">
+            <nav className="nav">
+              <button
+                className={`nav-btn ${view === 'search' ? 'active' : ''}`}
+                onClick={() => setView('search')}
+              >
+                探索書籍
+              </button>
+              <button
+                className={`nav-btn ${view === 'shelf' ? 'active' : ''}`}
+                onClick={() => setView('shelf')}
+              >
+                我的書架
+                {shelf.items.length > 0 && (
+                  <span className="badge">{shelf.items.length}</span>
+                )}
+              </button>
+            </nav>
+
             <button
-              className={`nav-btn ${view === 'search' ? 'active' : ''}`}
-              onClick={() => setView('search')}
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? '切換至淺色模式' : '切換至深色模式'}
             >
-              探索書籍
+              <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
             </button>
-            <button
-              className={`nav-btn ${view === 'shelf' ? 'active' : ''}`}
-              onClick={() => setView('shelf')}
-            >
-              我的書架
-              {shelf.items.length > 0 && (
-                <span className="badge">{shelf.items.length}</span>
-              )}
-            </button>
-          </nav>
+          </div>
         </div>
       </header>
 
@@ -187,7 +199,14 @@ export default function App() {
             )}
           </>
         ) : (
-          <Suspense fallback={<div className="panel-loading">載入中...</div>}>
+          <Suspense fallback={
+            <div className="panel-loading-skeleton">
+              <div className="skeleton-line skeleton-line--title" />
+              <div className="skeleton-line skeleton-line--row" />
+              <div className="skeleton-line skeleton-line--row" />
+              <div className="skeleton-line skeleton-line--row" />
+            </div>
+          }>
             <ShelfPanel
               items={shelf.items}
               onBookClick={setSelectedBook}
