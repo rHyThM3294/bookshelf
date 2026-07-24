@@ -5,6 +5,7 @@ import { useTheme } from './hooks/useTheme'
 import { SearchBar } from './components/SearchBar'
 import { BookGrid } from './components/BookGrid'
 import { EmptyState } from './components/EmptyState'
+import { ScrollToTopButton } from './components/ScrollToTopButton'
 import { recordSearch } from './services/searchHistory'
 import { getBookById } from './services/booksApi'
 import { StatsBar } from './components/StatsBar'
@@ -229,6 +230,8 @@ export default function App() {
           />
         </Suspense>
       )}
+
+      <ScrollToTopButton />
     </div>
   )
 }

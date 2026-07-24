@@ -35,6 +35,7 @@
 - **♿ 無障礙** — ARIA labels、鍵盤導航、語意化 HTML，並用 axe-core 自動化掃描把關
 - **📱 RWD** — 支援手機至桌機的響應式佈局
 - **🌙 深色模式** — 跟隨系統偏好或手動切換，選擇會記住；用 CSS 變數切換主題，避免載入瞬間閃色（FOUC）
+- **⬆️ 回到頂部** — 捲動超過 150px 後顯示浮動按鈕，鍵盤與滑鼠皆可操作
 - **⚙️ 效能** — Modal／書架頁以 `React.lazy` 拆成獨立 chunk，縮小首屏 bundle
 
 ---
@@ -74,12 +75,14 @@ src/
 │   ├── ShelfPanel.tsx
 │   ├── StatsBar.tsx
 │   ├── EmptyState.tsx
-│   └── ErrorBoundary.tsx  # 頂層錯誤邊界，避免單一元件出錯導致整頁白屏
+│   ├── ErrorBoundary.tsx  # 頂層錯誤邊界，避免單一元件出錯導致整頁白屏
+│   └── ScrollToTopButton.tsx  # 捲動超過 150px 才顯示的回頂部按鈕
 └── __tests__/      # 單元／整合測試（Vitest + RTL）
     ├── setup.ts
     ├── booksApi.test.ts
     ├── useShelf.test.ts
     ├── ErrorBoundary.test.tsx
+    ├── ScrollToTopButton.test.tsx
     └── App.test.tsx   # 整合測試：搜尋 → 開詳情 → 加入書架 → 切換頁面
 
 e2e/                # Playwright E2E 測試（瀏覽器端對端）
